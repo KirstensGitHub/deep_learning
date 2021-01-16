@@ -1,5 +1,5 @@
 import torch
-
+import numpy as np
 
 class FullyConnected(torch.autograd.Function):
     @staticmethod
@@ -19,6 +19,13 @@ class FullyConnected(torch.autograd.Function):
         y (Tensor): of size (T x m), the outputs of the fully_connected operator
         """
 
+        ##########################################################
+
+        ctx.save_for_backward(x,w,b)
+        y = torch.matmul(x,w)+b
+
+        ###########################################################
+
         return y
 
     @staticmethod
@@ -34,5 +41,20 @@ class FullyConnected(torch.autograd.Function):
         dzdw (Tenor): of size (n x m), the gradients with respect to w
         dzdb (Tensor): of size (m), the gradients with respect to b
         """
+
+        ###########################################################
+
+        x,w,b = ctx.saved_tensors
+        dzdx = torch.matmul(dz_dy, w.T)
+        dzdw = torch.matmul(x.T, dz_dy)
+        one  = torch.ones(dz_dy.shape[0])
+        dzdb = torch.tensor(np.dot(one,dz_dy))
+
+        # X is 48 x 2
+        # W is 2 x 72
+        # B is 72
+
+
+        ############################################################
 
         return dzdx, dzdw, dzdb

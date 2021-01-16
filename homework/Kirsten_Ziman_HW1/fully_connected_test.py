@@ -37,6 +37,34 @@ def fully_connected_test():
     full_connected = FullyConnected.apply
     # %%% DO NOT EDIT ABOVE
 
+    ###########################################################
+
+
+    # Compare analytical gradient w/ numerically approximated gradient
+
+    # ANALYTICAL GRADIENT
+    y = full_connected(X, W, B)
+    z = y.mean() # this is our simple function, J(y; theta)
+    z.backward()
+
+
+    # NUMERICALLY APPROXIMATED GRADIENT (finite difference)
+    dz_dy = torch.autograd.grad(z, y) #this is 48 x 72
+
+
+    # dzdx, dzdw, dzdb = FullyConnected.backward(dz_dy)
+
+
+    with torch.no_grad():
+
+        for p in X:
+            forward_difference = (p+DELTA)
+            backward_difference =
+
+
+    ############################################################
+
+
     return is_correct, err
 
 
