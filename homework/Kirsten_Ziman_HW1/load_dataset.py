@@ -32,11 +32,16 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
 
     # do normalization if it is enabled
     if normalization:
-        features / torch.std(features, dim=0)
+
+        sd = torch.std(features, dim=0); sd[sd==0]=1
+        # get standard deviations and change zeros to ones
+
+        features = features / torch.std(features, dim=0)
+
+    data['features'] = features
 
     # create tensor dataset train_ds
-
-    # xor_dataset.pt #######################
+    train_ds = torch.utils.data.TensorDataset(data['labels'], data['features'])
 
     ########################################
 
