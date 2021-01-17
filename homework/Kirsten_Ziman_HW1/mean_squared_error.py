@@ -18,6 +18,12 @@ class MeanSquaredError(torch.autograd.Function):
         y: (scalar) The mean squared error between x1 and x2
         """
 
+        ##############################################
+
+        y =  (x1-x2)**2/x1.shape[0]
+
+        ##############################################
+
         return y
 
     @staticmethod

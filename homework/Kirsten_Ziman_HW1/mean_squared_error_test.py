@@ -34,6 +34,25 @@ def mean_squared_error_test():
     mean_squared_error = MeanSquaredError.apply
     # %%% DO NOT EDIT ABOVE %%%
 
+    ##########################################################
+
+    # Compare analytical gradient w/ numerically approximated gradient
+
+    # ANALYTICAL GRADIENT
+    y = mean_squared_error(X1,X2)
+    z = y.mean() # this is our simple function, J(y; theta)
+    z.backward()
+
+    ana_X1, ana_X2 = X1.grad, X2.grad
+
+    # test = gradcheck(MeanSquaredError.apply, (X1, X2), eps=DELTA, atol=TOL)
+
+
+    # NUMERICALLY APPROXIMATED GRADIENT (finite difference)
+
+    #dz_dy = torch.autograd.grad(z, y) # this is 48 x 72
+
+    ##########################################################
 
     return is_correct, err
 

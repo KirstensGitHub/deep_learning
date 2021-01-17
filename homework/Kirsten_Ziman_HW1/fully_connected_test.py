@@ -1,5 +1,6 @@
 from fully_connected import FullyConnected
 import torch
+from torch.autograd import gradcheck
 
 
 def fully_connected_test():
@@ -47,9 +48,10 @@ def fully_connected_test():
     z = y.mean() # this is our simple function, J(y; theta)
     z.backward()
 
+    ana_x, ana_b, ana_w = X.grad, B.grad, W.grad
 
     # NUMERICALLY APPROXIMATED GRADIENT (finite difference)
-    dz_dy = torch.autograd.grad(z, y) #this is 48 x 72
+    dz_dy = torch.autograd.grad(z, y) # this is 48 x 72
 
 
     # dzdx, dzdw, dzdb = FullyConnected.backward(dz_dy)
@@ -57,13 +59,19 @@ def fully_connected_test():
 
     with torch.no_grad():
 
-        for p in X:
-            forward_difference = (p+DELTA)
-            backward_difference =
+        X_PLUS = X + DELTA; X_MINUS = X - DELTA
+        B_PLUS = B + DELTA; B_MINUS = B - DELTA
+        W_PLUS = W + DELTA; W_MINUS = W - DELTA
 
+        num_x = dz_dy[0]*((full_connected(X_PLUS, W, B) - full_connected(X_MINUS, W, B)) / (DELTA * 2))
+        num_b = dz_dy[0]*((full_connected(X, W, B_PLUS) - full_connected(X, W, B_MINUS)) / (DELTA * 2))
+        num_w = dz_dy[0]*((full_connected(X, W_PLUS, B) - full_connected(X, W_MINUS, B)) / (DELTA * 2))
+
+    e_x = dz_dy - num_x; e_x = e_x.max()
+    e_w = dz_dy - num_w; e_w = e_w.max()
+    e_b = dz_dy - num_b; e_b = e_b.max()
 
     ############################################################
-
 
     return is_correct, err
 
