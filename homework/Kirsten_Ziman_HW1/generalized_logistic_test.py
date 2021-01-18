@@ -41,6 +41,10 @@ def generalized_logistic_test():
     # %%%  DO NOT EDIT ABOVE %%%
 
 
+    y = GeneralizedLogistic(X,L,U,G)
+    z = y.mean()
+    z.backward()
+
     return is_correct, err
 
 
