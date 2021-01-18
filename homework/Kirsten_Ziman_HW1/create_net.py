@@ -27,8 +27,15 @@ def create_net(input_features, hidden_units, non_linearity, output_size):
     # add the hidden layers
     for i,(h,nl) in enumerate(zip(hidden_units, non_linearity)):
 
-        net.add_module("fc",  FullyConnectedLayer(hidden_units[i-1],h))
-        net.add_module("tanH", GeneralizedLogisticLayer(nl))
+        fc_name = 'fc_'+str(i); nl_name = nl+'_'+str(i)
+
+        if i == 0:
+            prev_hidden = input_features
+        else:
+            prev_hidden = hidden_units[i-1]
+
+        net.add_module(fc_name,  FullyConnectedLayer(prev_hidden,h))
+        net.add_module(nl_name, GeneralizedLogisticLayer(nl))
 
     # add output layer
     net.add_module('predictions', FullyConnectedLayer(h, output_size))

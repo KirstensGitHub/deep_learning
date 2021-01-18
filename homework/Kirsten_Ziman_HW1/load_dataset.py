@@ -24,26 +24,21 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
     features = data['features']
     labels   = data['labels']
 
-    torch.mean(features, 0)
-
     # Do mean_subtraction if it is enabled
-    if mean_subtraction:
+    if mean_subtraction==True:
         features = features - torch.mean(features, 0)
 
     # do normalization if it is enabled
-    if normalization:
+    if normalization==True:
 
         sd = torch.std(features, dim=0); sd[sd==0]=1
         # get standard deviations and change zeros to ones
 
         features = features / torch.std(features, dim=0)
 
-    data['features'] = features
-
     # create tensor dataset train_ds
-    train_ds = torch.utils.data.TensorDataset(data['labels'], data['features'])
+    train_ds = torch.utils.data.TensorDataset(features, labels)
 
     ########################################
-
 
     return train_ds
