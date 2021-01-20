@@ -37,6 +37,8 @@ def create_net(input_features, hidden_units, non_linearity, output_size):
         net.add_module(fc_name,  FullyConnectedLayer(prev_hidden,h))
         net.add_module(nl_name, GeneralizedLogisticLayer(nl))
 
+        print('layer '+str(i))
+
     # add output layer
     net.add_module('predictions', FullyConnectedLayer(h, output_size))
 

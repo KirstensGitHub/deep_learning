@@ -20,7 +20,7 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
     ########################################
 
     # Load the dataset and extract the features and the labels
-    data     = torch.load('xor_dataset.pt')
+    data     = torch.load(dataset_path)
     features = data['features']
     labels   = data['labels']
 
@@ -34,7 +34,7 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
         sd = torch.std(features, dim=0); sd[sd==0]=1
         # get standard deviations and change zeros to ones
 
-        features = features / torch.std(features, dim=0)
+        features = features / sd
 
     # create tensor dataset train_ds
     train_ds = torch.utils.data.TensorDataset(features, labels)
