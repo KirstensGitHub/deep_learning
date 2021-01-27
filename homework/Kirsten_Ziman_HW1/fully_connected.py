@@ -47,13 +47,12 @@ class FullyConnected(torch.autograd.Function):
         x,w,b = ctx.saved_tensors
         dzdx = torch.matmul(dz_dy, w.T)
         dzdw = torch.matmul(x.T, dz_dy)
-        one  = torch.ones(dz_dy.shape[0])
-        dzdb = torch.tensor(np.dot(one,dz_dy))
+        one  = torch.ones((1,dz_dy.shape[0]), dtype=torch.float64)
+        dzdb = torch.matmul(one,dz_dy)
 
         # X is 48 x 2
         # W is 2 x 72
         # B is 72
-
 
         ############################################################
 

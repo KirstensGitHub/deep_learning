@@ -1,6 +1,5 @@
 from fully_connected import FullyConnected
 import torch
-from torch.autograd import gradcheck
 
 
 def fully_connected_test():
@@ -40,7 +39,6 @@ def fully_connected_test():
 
     ###########################################################
 
-
     # Compare analytical gradient w/ numerically approximated gradient
 
     # ANALYTICAL GRADIENT
@@ -54,22 +52,110 @@ def fully_connected_test():
     dz_dy = torch.autograd.grad(z, y) # this is 48 x 72
 
 
-    # dzdx, dzdw, dzdb = FullyConnected.backward(dz_dy)
+    # FINITE DIFF CALCS ##############################
 
+    is_correct = True
+    err = {'dzdx':[], 'dzdw':[], 'dzdb':[]}
 
+    # X gradient #####################################
     with torch.no_grad():
 
-        X_PLUS = X + DELTA; X_MINUS = X - DELTA
-        B_PLUS = B + DELTA; B_MINUS = B - DELTA
-        W_PLUS = W + DELTA; W_MINUS = W - DELTA
+        num_x = torch.zeros(X.shape)
 
-        num_x = dz_dy[0]*((full_connected(X_PLUS, W, B) - full_connected(X_MINUS, W, B)) / (DELTA * 2))
-        num_b = dz_dy[0]*((full_connected(X, W, B_PLUS) - full_connected(X, W, B_MINUS)) / (DELTA * 2))
-        num_w = dz_dy[0]*((full_connected(X, W_PLUS, B) - full_connected(X, W_MINUS, B)) / (DELTA * 2))
+        # for each row
+        for b in range(0, X.shape[1]):
 
-    e_x = dz_dy - num_x; e_x = e_x.max()
-    e_w = dz_dy - num_w; e_w = e_w.max()
-    e_b = dz_dy - num_b; e_b = e_b.max()
+            # for each column
+            for a in range(0, X.shape[0]):
+
+                x_clone = X.clone()
+                x_plus  = X.clone(); x_minus = X.clone()
+                zers    = torch.zeros(X.shape)
+
+                # make x_plus and x_minus
+                x_minus[a,b] = x_minus[a,b]-DELTA
+                x_plus[a,b]  = x_plus[a,b]+DELTA
+
+                # calculate gradient
+                grad_x = dz_dy[0] * ((full_connected(x_plus, W, B) - full_connected(x_minus, W, B)) / (DELTA * 2))
+                num_x[a,b] = grad_x.sum()
+
+        diff_x = X.grad - num_x
+        abs_diff_x = abs(diff_x)
+
+        err['dzdx'] = abs_diff_x.max()
+
+        if err['dzdx'] > TOL:
+            is_correct = False
+
+    # W gradient #####################################
+    with torch.no_grad():
+
+        num_w = torch.zeros(W.shape)
+
+        # for each row
+        for b in range(0, W.shape[1]):
+
+            # for each column
+            for a in range(0, W.shape[0]):
+                w_clone = W.clone()
+                w_plus = W.clone();
+                w_minus = W.clone()
+                zers = torch.zeros(W.shape)
+
+                # make x_plus and x_minus
+                w_minus[a, b] = w_minus[a, b] - DELTA
+                w_plus[a, b] = w_plus[a, b] + DELTA
+
+                # calculate gradient
+                grad_w = dz_dy[0] * ((full_connected(X, w_plus, B) - full_connected(X, w_minus, B)) / (DELTA * 2))
+                num_w[a, b] = grad_w.sum()
+
+        diff_w = W.grad - num_w
+        abs_diff_w = abs(diff_w)
+
+        err['dzdw'] = abs_diff_w.max()
+
+        if err['dzdw'] > TOL:
+            is_correct = False
+
+    # B gradient #####################################
+    with torch.no_grad():
+
+        num_b = torch.zeros(B.shape)
+
+        # for each row
+        for b in range(0, B.shape[0]):
+
+            b_clone = B.clone()
+            b_plus = B.clone();
+            b_minus = B.clone()
+            zers = torch.zeros(B.shape)
+
+            # make x_plus and x_minus
+            b_minus[b] = b_minus[b] - DELTA
+            b_plus[b] = b_plus[b] + DELTA
+
+            # calculate gradient
+            grad_b = dz_dy[0] * ((full_connected(X, W, b_plus) - full_connected(X, W, b_minus)) / (DELTA * 2))
+            num_b[b] = grad_b.sum()
+
+        diff_b = B.grad - num_b
+        abs_diff_b = abs(diff_b)
+
+        err['dzdb'] = abs_diff_b.max()
+
+        if err['dzdb'] > TOL:
+            is_correct = False
+
+    ############################################################
+
+    # Final check
+    if torch.autograd.gradcheck(FullyConnected.apply, (X, W, B), eps=DELTA, atol=TOL) == False :
+        is_correct = False
+
+    # save
+    torch.save([is_correct, err],'fully_connected_test_results.pt')
 
     ############################################################
 
