@@ -20,9 +20,11 @@ hidden_units  = [3]
 non_linearity = ['tanH']
 
 # create a network base on the architecture
+
 net = create_net(in_features, hidden_units, non_linearity, out_size)
 
 # specify the training opts
+# train_opts
 train_opts = {'num_epochs': 25, 'lr': 0.5, 'momentum': 0.9, 'batch_size': 4, 'weight_decay': 0, 'step_size':25, 'gamma':1.0}
 
 # train  and save the model
