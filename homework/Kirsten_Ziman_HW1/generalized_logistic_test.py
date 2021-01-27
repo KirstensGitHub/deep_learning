@@ -40,11 +40,17 @@ def generalized_logistic_test():
     generalized_logistic = GeneralizedLogistic.apply
     # %%%  DO NOT EDIT ABOVE %%%
 
-
     y = generalized_logistic(X,L,U,G)
+    z = y.mean()
+    z.backward()
 
-    # alternate:
-    alt = torch.tanh(X)
+    # CHECK DICT ###############################
+    err = {'dzdx':[],'dzdl': [],'dzdu':[],'dzdg':[],'y':[]}
+
+    # CHECK FORWARD PASS #######################
+
+    y_err = abs(generalized_logistic(X,L,U,G) - torch.tanh(X)).max()
+    err['y'] = y_err
 
     # z = y.mean()
     # gradcheck(GeneralizedLogistic.apply, (X,L,U,G), eps=DELTA, atol=TOL2)
@@ -57,11 +63,9 @@ def generalized_logistic_test():
     # FINITE DIFF CALCS ##############################
 
     is_correct = True
-    err = {'dzdx': [], 'dzdl': [], 'dzdu': [], 'dzdg': []}
-    #
-    # x1_clone = X1.clone()
-    # x2_clone = X2.clone()
 
+    if y_err > TOL1:
+        is_correct = False
 
 
     # X gradient #####################################
@@ -73,7 +77,7 @@ def generalized_logistic_test():
         for b in range(0, X.shape[1]):
 
             # for each column
-            for a in range(0, X1.shape[0]):
+            for a in range(0, X.shape[0]):
                 x_clone = X.clone()
                 x_plus = X.clone();
                 x_minus = X.clone()
@@ -93,45 +97,111 @@ def generalized_logistic_test():
 
         err['dzdx'] = abs_diff_x.max()
 
-        if err['dzdx'] > TOL:
+        if err['dzdx'] > TOL2:
             is_correct = False
 
         # L gradient #####################################
         with torch.no_grad():
 
-            num_l = torch.zeros(l.shape)
+            num_l = torch.zeros(L.shape)
 
             # for each row
-            for b in range(0, l.shape[1]):
+            #for b in range(0, L.shape[1]):
 
-                # for each column
-                for a in range(0, l.shape[0]):
-                    l_clone = l.clone()
-                    l_plus  = l.clone();
-                    l_minus = l.clone()
-                    zers = torch.zeros(l.shape)
+            # for each column
+            # for a in range(0, L.shape[0]):
+            #     l_clone = L.clone()
+            l_plus  = L.clone();
+            l_minus = L.clone()
+            zers = torch.zeros(L.shape)
 
-                    # make x_plus and x_minus
-                    l_minus[a, b] = l_minus[a, b] - DELTA
-                    l_plus[a, b]  = l_plus[a, b] + DELTA
+            # make x_plus and x_minus
+            l_minus = l_minus - DELTA
+            l_plus  = l_plus + DELTA
 
-                    # calculate gradient
-                    grad_l = dz_dy[0] * (
-                        (generalized_logistic(X, l_plus, U, G) - generalized_logistic(X, l_minus, U, G)) / (DELTA * 2))
-                    num_l[a, b] = grad_l.sum()
+            # calculate gradient
+            grad_l = dz_dy[0] * (
+                (generalized_logistic(X, l_plus, U, G) - generalized_logistic(X, l_minus, U, G)) / (DELTA * 2))
+            num_l = grad_l.sum()
 
             diff_l = L.grad - num_l
             abs_diff_l = abs(diff_l)
 
             err['dzdl'] = abs_diff_l.max()
 
-            if err['dzdl'] > TOL:
+            if err['dzdl'] > TOL2:
+                is_correct = False
+
+        # U gradient #####################################
+        with torch.no_grad():
+
+            num_u = torch.zeros(U.shape)
+
+            # for each row
+            # for b in range(0, u.shape[1]):
+
+            # for each column
+            # for a in range(0, u.shape[0]):
+            #     u_clone = u.clone()
+            u_plus  = U.clone();
+            u_minus = U.clone()
+            zers = torch.zeros(U.shape)
+
+            # make x_plus and x_minus
+            u_minus = u_minus - DELTA
+            u_plus  = u_plus + DELTA
+
+            # calculate gradient
+            grad_u = dz_dy[0] * (
+                (generalized_logistic(X, L, u_plus, G) - generalized_logistic(X, L, u_minus, G)) / (
+                DELTA * 2))
+            num_u = grad_u.sum()
+
+            diff_u = U.grad - num_u
+            abs_diff_u = abs(diff_u)
+
+            err['dzdu'] = abs_diff_u.max()
+
+            if err['dzdu'] > TOL2:
+                is_correct = False
+
+        # G gradient #####################################
+        with torch.no_grad():
+
+            num_g = torch.zeros(G.shape)
+
+            # for each row
+            # for b in range(0, g.shape[1]):
+
+            # for each column
+            # for a in range(0, g.shape[0]):
+            #     g_clone = g.clone()
+            g_plus  = G.clone();
+            g_minus = G.clone()
+            zers = torch.zeros(G.shape)
+
+            # make x_plus and x_minus
+            g_minus = g_minus - DELTA
+            g_plus = g_plus + DELTA
+
+            # calculate gradient
+            grad_g = dz_dy[0] * (
+                (generalized_logistic(X, L, U, g_plus) - generalized_logistic(X, L, U, g_minus)) / (
+                    DELTA * 2))
+            num_g = grad_g.sum()
+
+            diff_g = G.grad - num_g
+            abs_diff_g = abs(diff_g)
+
+            err['dzdg'] = abs_diff_g.max()
+
+            if err['dzdg'] > TOL2:
                 is_correct = False
 
     ############################################################
 
     # Final check
-    if torch.autograd.gradcheck(GeneralizedLogistic.apply, (X1, X2), eps=DELTA, atol=TOL) == False:
+    if torch.autograd.gradcheck(GeneralizedLogistic.apply, (X, L, U, G), eps=DELTA, atol=TOL2) == False:
         is_correct = False
 
     # save
